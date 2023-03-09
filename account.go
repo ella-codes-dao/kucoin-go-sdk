@@ -6,6 +6,35 @@ import (
 	"net/http"
 )
 
+// An AccountSummaryModel represents the summary information for an account
+type AccountSummaryModel struct {
+	Level                int                  `json:"level"`
+	SubQuantity          int                  `json:"subQuantity"`
+	SubQuantityByType    SubQuantityByType    `json:"subQuantityByType"`
+	MaxSubQuantity       int                  `json:"maxSubQuantity"`
+	MaxSubQuantityByType MaxSubQuantityByType `json:"maxSubQuantityByType"`
+}
+
+type SubQuantityByType struct {
+	GeneralSubQuantity int `json:"generalSubQuantity"`
+	MarginSubQuantity  int `json:"marginSubQuantity"`
+	FuturesSubQuantity int `json:"futuresSubQuantity"`
+}
+
+type MaxSubQuantityByType struct {
+	MaxDefaultSubQuantity int `json:"maxDefaultSubQuantity"`
+	MaxGeneralSubQuantity int `json:"maxGeneralSubQuantity"`
+	MaxMarginSubQuantity  int `json:"maxMarginSubQuantity"`
+	MaxFuturesSubQuantity int `json:"maxFuturesSubQuantity"`
+}
+
+// Accounts returns a list of accounts.
+// See the Deposits section for documentation on how to deposit funds to begin trading.
+func (as *ApiService) AccountSummary() (*ApiResponse, error) {
+	req := NewRequest(http.MethodGet, "/api/v1/user-info", nil)
+	return as.Call(req)
+}
+
 // An AccountModel represents an account.
 type AccountModel struct {
 	Id        string `json:"id"`
@@ -42,7 +71,9 @@ func (as *ApiService) Account(accountId string) (*ApiResponse, error) {
 // A SubAccountUserModel represents a sub-account user.
 type SubAccountUserModel struct {
 	UserId  string `json:"userId"`
+	Access  string `json:"access"`
 	SubName string `json:"subName"`
+	Status  uint   `json:"status"`
 	Remarks string `json:"remarks"`
 	Type    int    `json:"type"`
 }
@@ -51,8 +82,18 @@ type SubAccountUserModel struct {
 type SubAccountUsersModel []*SubAccountUserModel
 
 // SubAccountUsers returns a list of sub-account user.
+// Deprecated: This interface was depreceated. Please use SubAccountUsersV2.
 func (as *ApiService) SubAccountUsers() (*ApiResponse, error) {
 	req := NewRequest(http.MethodGet, "/api/v1/sub/user", nil)
+	return as.Call(req)
+}
+
+// SubAccountUsers returns a list of sub-account user.
+func (as *ApiService) SubAccountUsersV2(pagination *PaginationParam) (*ApiResponse, error) {
+	params := map[string]string{}
+	pagination.ReadParam(params)
+
+	req := NewRequest(http.MethodGet, "/api/v2/sub/user", params)
 	return as.Call(req)
 }
 
@@ -113,9 +154,44 @@ type SubAccountModel struct {
 	} `json:"marginAccounts"`
 }
 
+// A CreateSubAccountModel represents the parameters for creating a new sub account
+type CreateSubAccountModel struct {
+	UID      string `json:"uid"`
+	Password string `json:"password"`
+	Remarks  string `json:"remarks"`
+	SubName  string `json:"subName"`
+	Access   string `json:"access"`
+}
+
+// CreateSubAccount creates a new sub account
+func (as *ApiService) CreateSubAccount(subAccount *CreateAccountModel) (*ApiResponse, error) {
+	req := NewRequest(http.MethodPost, "/api/v1/sub/user", subAccount)
+	return as.Call(req)
+}
+
+type SubAccountKey struct {
+	SubName     string `json:"subName"`
+	Remark      string `json:"remark"`
+	APIKey      string `json:"apiKey"`
+	Permission  string `json:"permission"`
+	IPWhitelist string `json:"ipWhitelist"`
+	CreatedAt   int64  `json:"createdAt"`
+}
+
+type SubAccountKeys []*SubAccountKey
+
 // SubAccount returns the detail of a sub-account.
 func (as *ApiService) SubAccount(subUserId string) (*ApiResponse, error) {
 	req := NewRequest(http.MethodGet, "/api/v1/sub-accounts/"+subUserId, nil)
+	return as.Call(req)
+}
+
+// SubAccountApiList Returns a list of API Keys for the specified Sub Account
+func (as *ApiService) SubAccountApiList(subName string) (*ApiResponse, error) {
+	params := map[string]string{}
+	params["subName"] = subName
+
+	req := NewRequest(http.MethodGet, "/api/v1/sub/api-key", params)
 	return as.Call(req)
 }
 
