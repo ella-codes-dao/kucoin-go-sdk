@@ -207,6 +207,25 @@ func (as *ApiService) CreateAccount(typo, currency string) (*ApiResponse, error)
 	return as.Call(req)
 }
 
+// Sub-Account API Model
+type SubAccountAPIModel struct {
+	SubName     string `json:"subName"`
+	ApiKey      string `json:"apiKey"`
+	ApiSecret   string `json:"apiSecret"`
+	Passphrase  string `json:"passphrase"`
+	Remark      string `json:"remark"`
+	Permission  string `json:"permission"`
+	IpWhitelist string `json:"ipWhitelist"`
+	Expire      string `json:"expire"`
+}
+
+// CreateSubAccountAPI creates a sub-account API key.
+func (as *ApiService) CreateSubAccountAPI(opts SubAccountAPIModel) (*ApiResponse, error) {
+	params := StructToMap(opts)
+	req := NewRequest(http.MethodPost, "/api/v1/sub/api-key", params)
+	return as.Call(req)
+}
+
 // An AccountLedgerModel represents account activity either increases or decreases your account balance.
 type AccountLedgerModel struct {
 	ID          string          `json:"id"`
